@@ -1,12 +1,6 @@
 </pre>
-
-<script src="//cdn.ztx.io/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-<script>
-    var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/twilight");
-    editor.getSession().setMode("ace/mode/markdown");
-</script>
-
+<script src="http://localhost/~lulala/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="http://localhost/~lulala/edit.js" type="text/javascript" charset="utf-8"></script>        
 </body>
 </html>
 

@@ -20,5 +20,8 @@
   </style>
 </head>
 <body>
-
+  <form method="POST" name="body">
+    <input type="submit" id="saveBut"/>
+    <input id="savValue" type="hidden" name="body" value="" />
+  </form>
 <pre id="editor">
