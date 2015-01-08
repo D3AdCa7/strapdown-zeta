@@ -18,7 +18,6 @@ var addr = flag.String("address", "0.0.0.0", "Listening address")
 var view_head, view_tail, edit_head, edit_tail []byte
 
 func init() {
-	logs()
 	var err error
 	if view_head, err = ioutil.ReadFile("view.head"); err != nil {
 		log.Fatalf("cannot read view.head")
@@ -106,7 +105,6 @@ func logs() {
 	if err != nil {
 		log.Println("%v",err)
 	}
-	
 	i := 0
 	for ; currentTip != nil; {
 		parent = currentTip.Parent(0);
@@ -130,9 +128,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.URL.Path, http.StatusFound)
 		return
 	}
-
 	content, err := ioutil.ReadFile(fp)
-
 	handleEdit := func() {
 		fmt.Fprintf(w, "%s\n", edit_head)
 		w.Write(content)
