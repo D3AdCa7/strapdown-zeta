@@ -18,6 +18,7 @@ var addr = flag.String("address", "0.0.0.0", "Listening address")
 var view_head, view_tail, edit_head, edit_tail []byte
 
 func init() {
+	logs()
 	var err error
 	if view_head, err = ioutil.ReadFile("view.head"); err != nil {
 		log.Fatalf("cannot read view.head")
@@ -92,21 +93,30 @@ func push(fp string, content []byte, comment string, author string) error {
 
 func logs() {
 	var err error
-	tree,err := git.tree.EntryByPath("./")
-	test()
-	i := 1
-	// func (t Tree) Walk(callback TreeWalkCallback) error {
-	for tree,err = tree.Walk(test);err ==nil && tree!=nil; {
-		log.Println("time",i)
-		i++
+	var parent *git.Commit
+	repo,_ := git.OpenRepository(".")
+	if err != nil {
+		log.Println("%v",err)
 	}
-	log.Println("over")
+	currentBranch, err := repo.Head()
+	if err != nil {
+		log.Println("%v",err)
+	}
+	currentTip, err := repo.LookupCommit(currentBranch.Target())
+	if err != nil {
+		log.Println("%v",err)
+	}
+	
+	i := 0
+	for ; currentTip != nil; {
+		parent = currentTip.Parent(0);
+		if parent != nil {
+			i += 1
+		}
+		currentTip = parent
+	}
 }
 
-func test() {
-	log.Println("go")
-	return
-}
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	fp := r.URL.Path[1:] + ".md"

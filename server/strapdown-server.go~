@@ -49,7 +49,6 @@ func push(fp string, content []byte, comment string, author string) error {
 	if err != nil {
 		return err
 	}
-
 	index, err := repo.Index()
 	if err != nil {
 		return err
@@ -88,24 +87,6 @@ func push(fp string, content []byte, comment string, author string) error {
 		return err
 	}
 	return nil
-}
-
-func logs() {
-	var err error
-	tree,err := git.tree.EntryByPath("./")
-	test()
-	i := 1
-	// func (t Tree) Walk(callback TreeWalkCallback) error {
-	for tree,err = tree.Walk(test);err ==nil && tree!=nil; {
-		log.Println("time",i)
-		i++
-	}
-	log.Println("over")
-}
-
-func test() {
-	log.Println("go")
-	return
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
