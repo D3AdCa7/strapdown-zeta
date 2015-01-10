@@ -96,38 +96,31 @@ func push(fp string, content []byte, comment string, author string) error {
 func logs( fp string ) {
 	var err error
 	var parent *git.Commit
+
 	repo,_ := git.OpenRepository(".")
 	if err != nil {
-		log.Println("%v",err)
+		log.Fatal(err)
 	}
+	
 	currentBranch, err := repo.Head()
 	if err != nil {
-		log.Println("%v",err)
+		log.Fatal(err)
 	}
+	
 	currentTip, err := repo.LookupCommit(currentBranch.Target())
 	if err != nil {
-		log.Println("%v",err)
+		log.Fatal(err)
 	}
-	i := 0
-	str, err := getFile(repo,currentTip,fp)
-	log.Println(*str)
-	parent = currentTip.Parent(0)
-	for ; parent != nil; {
-		log.Println(i,currentTip.Message(),currentTip.TreeId())
-		i++
-		if parent != nil {
-			currentTip = parent
-			parent = currentTip.Parent(0)
-			str, err := getFile(repo,currentTip,fp)
-			if err != nil {
-				log.Println(err)
-			}
-			if str != nil {
-				log.Println(*str)
-			} else {
-				log.Println("nothing in this commit")
-			}
+
+	for ; currentTip != nil; {
+		parent = currentTip.Parent(0)
+		str, err := getFile(repo,currentTip,fp)
+		if err == nil && str != nil {
+			log.Println(currentTip.Message(),currentTip.Id())
+			log.Println(*str)
 		}
+		parent = currentTip.Parent(0)
+		currentTip = parent
 	}
 }
 
@@ -137,18 +130,18 @@ func getFile( repo *git.Repository,commit *git.Commit, fileName string ) (*strin
 	if err != nil {
 		return nil,err
 	}
-	
+
 	enter := tree.EntryByName(fileName)
 	if enter == nil {
 		return nil,err
 	}
-	
+
 	oid := enter.Id
 	blb, err := repo.LookupBlob(oid)
 	if err != nil {
 		return nil,err
 	}
-	
+
 	ret := string(blb.Contents())
 	return &ret,nil
 }
