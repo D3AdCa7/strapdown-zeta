@@ -119,7 +119,6 @@ func logs( fp string ) {
 			log.Println(currentTip.Message(),currentTip.Id())
 			log.Println(*str)
 		}
-		parent = currentTip.Parent(0)
 		currentTip = parent
 	}
 }
