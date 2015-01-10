@@ -109,7 +109,8 @@ func logs( fp string ) {
 		log.Println("%v",err)
 	}
 	i := 0
-	log.Println(i,currentTip.Message(),currentTip.TreeId())
+	str, err := getFile(repo,currentTip,fp)
+	log.Println(*str)
 	parent = currentTip.Parent(0)
 	for ; parent != nil; {
 		log.Println(i,currentTip.Message(),currentTip.TreeId())
@@ -117,7 +118,15 @@ func logs( fp string ) {
 		if parent != nil {
 			currentTip = parent
 			parent = currentTip.Parent(0)
-			getFile(currentTip,repo,fp)
+			str, err := getFile(repo,currentTip,fp)
+			if err != nil {
+				log.Println(err)
+			}
+			if str != nil {
+				log.Println(*str)
+			} else {
+				log.Println("nothing in this commit")
+			}
 		}
 	}
 }
@@ -139,10 +148,10 @@ func getFile( repo *git.Repository,commit *git.Commit, fileName string ) (*strin
 	if err != nil {
 		return nil,err
 	}
+	
 	ret := string(blb.Contents())
-	return &ret,nill
+	return &ret,nil
 }
-
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	fp := r.URL.Path[1:] + ".md"
