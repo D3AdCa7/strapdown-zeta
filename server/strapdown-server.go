@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"time"
+	"errors"
 )
 
 var port = flag.Int("port", 8080, "The port for the server to listen")
@@ -97,7 +98,7 @@ func logs( fp string ) {
 	var err error
 	var parent *git.Commit
 
-	repo,_ := git.OpenRepository(".")
+	repo,err := git.OpenRepository(".")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,14 +117,14 @@ func logs( fp string ) {
 		parent = currentTip.Parent(0)
 		str, err := getFile(repo,currentTip,fp)
 		if err == nil && str != nil {
-			log.Println(currentTip.Message(),currentTip.Id())
-			log.Println(*str)
+			log.Println(currentTip.Message(),currentTip.Id().String()[0:12])
+			log.Println(str)
 		}
 		currentTip = parent
 	}
 }
 
-func getFile( repo *git.Repository,commit *git.Commit, fileName string ) (*string, error) {
+func getFile( repo *git.Repository,commit *git.Commit, fileName string ) ( *string, error ) {
 	var err error
 	tree, err := commit.Tree()
 	if err != nil {
@@ -143,6 +144,44 @@ func getFile( repo *git.Repository,commit *git.Commit, fileName string ) (*strin
 
 	ret := string(blb.Contents())
 	return &ret,nil
+}
+
+func getFileOfVersion( fileName string, version string ) ([]byte, error) {
+	var err error
+	var commitQ *git.Commit
+	
+	repo,err := git.OpenRepository(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	currentBranch,err := repo.Head()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	commitP, err := repo.LookupCommit(currentBranch.Target())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for ; commitP != nil; {
+		if commitP.Id().String()[0:12] == version || commitP.Id().String() == version{
+			str, err := getFile(repo,commitP,fileName)
+			if err != nil {
+				log.Fatal(err)
+			}
+			
+			var s []byte
+			if str != nil {
+				s = []byte(*str)
+			}
+			return s,err
+		}
+		commitQ = commitP.Parent(0)
+		commitP = commitQ
+	}
+	return nil,nil
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
@@ -165,6 +204,25 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "\n%s", edit_tail)
 	}
 
+	handleVersion := func( fileName string, version string ) {
+		var err error
+		content, err := getFileOfVersion(fileName, version)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		if err == nil && content == nil {
+			str := "Error : Can not find "+fileName+" of version "+version
+			err = errors.New(str)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Println(str)
+			return
+		}
+		fmt.Fprintf(w, "%s\n", edit_head)
+		w.Write(content)
+		fmt.Fprintf(w, "\n%s",edit_tail)
+	}
+
 	if err != nil {
 		if _, err := os.Stat(fp); err != nil {
 			// file not exist or permission denied, enter edit mode
@@ -181,6 +239,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	if exists {
 		// enter edit mode
 		handleEdit()
+		return
+	}
+	
+	version, exists := q["version"]
+	if exists {
+		handleVersion(fp,version[0])
 		return
 	}
 
